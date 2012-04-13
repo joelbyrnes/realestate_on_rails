@@ -11,3 +11,15 @@
  *= require_self
  *= require_tree .
 */
+
+.site_id {
+    font-size: smaller;
+}
+
+.title {
+    font-weight: bold;
+}
+
+table.properties td {
+    vertical-align: top;
+}
