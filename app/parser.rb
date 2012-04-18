@@ -2,39 +2,39 @@ require 'nokogiri'
 require 'open-uri'
 require 'net/http'
 require 'uri'
+require 'json'
 
 class PropertyImport
-  attr_accessor :title, :site_id, :url, :photo_url, :address, :seen_date, :price_string
+  attr_accessor :title, :unique_id, :url, :photo_url, :address, :price_string, :note
   
-  def initialize(title, site_id, url, photo_url)
-    @title = title
-    @site_id = site_id
-    @url = url
-    @photo_url = photo_url
+  def initialize(unique_id)
+    @unique_id = unique_id
   end
   
   def to_s
-    "Property: " + @site_id + ", " + @title
+    "Property: " + @unique_id + ", " + @title
   end
 end
 
 def parse_property(result)
   div_propInfo = result.xpath(".//div[@class='propertyInfo']")[0]
-  img_photo = div_propInfo.xpath(".//div[@class='photo']/a/img")[0]
-  
   a_prop = div_propInfo.xpath(".//a[@rel='listingName']")[0]
-  title = a_prop.content
-  # or just http://www.realestate.com.au/123456789
-  
-  # prop = {}
-  
+
   url = "http://www.realestate.com.au" + a_prop['href']
   id = /\d+/.match(url)[0]
-  photo_url = img_photo['src']
-  puts id
-  puts title
-  puts url
-  puts photo_url
+
+  prop = PropertyImport.new(id)
+  prop.url = url
+
+  prop.title = a_prop.content
+
+  img_photo = div_propInfo.xpath(".//div[@class='photo']/a/img")[0]
+  prop.photo_url = img_photo['src']
+
+  puts prop.unique_id
+  puts prop.title
+  puts prop.url
+  puts prop.photo_url
   
   times = result.xpath(".//div[@class='times']")[0]
   date = times.xpath(".//ul/li[@class='date']")[0].content
@@ -42,26 +42,64 @@ def parse_property(result)
   puts date
   puts time
 
-  prop = PropertyImport.new(title, id, url, photo_url)
-
   p_price = result.xpath(".//div[@class='priceInfo']/p")[0]
   if p_price['title']
-    price_string = p_price['title']
+    prop.price_string = p_price['title']
   else
-    price_string = p_price.xpath(".//span[@class='hidden']")[0].content.sub(" none", "")
+    prop.price_string = p_price.xpath(".//span[@class='hidden']")[0].content.sub(" none", "")
   end
-  puts price_string
-  prop.price_string = price_string
-  
+  puts prop.price_string
+
+  note_p = result.xpath(".//div[@class='note']/p")[0]
+  if note_p
+    prop.note = "(from RE) " + note_p.content
+    puts prop.note
+  end
+
   return prop
+end
+
+def parse_json(json)
+  # remove variable declaration and following crap
+  json = json.sub("LMI.Data.listings=", '').sub(";", "")
+  json = json.sub(/LMI.Data.listGroup.*/, '')
+  # wrap the keys in quotes
+  json = json.gsub(/([A-Za-z0-9]+):/, '"\1":')
+
+  data = JSON.parse(json)
+
+  keys = ["id", "name", "city", "displayPrice", "latitude", "longitude", "prettyDetailsUrl", "note"]
+
+  data.map { |d|
+    {
+        :id => d["id"],
+        :title => d["name"],
+        :city => d["city"],
+        :display_price => d["displayPrice"],
+        :latitude => d["latitude"],
+        :longitude => d["longitude"],
+        :url => "http://www.realestate.com.au" + d["prettyDetailsUrl"],
+        :note => d["note"] == "" ? "" : "(from RE) " + d["note"]
+    }
+  }
 end
 
 def parse_inspections(html)
   doc = Nokogiri::HTML.parse(html)
-  results = doc.xpath("//div[contains(@class, 'resultBody') and @class!='resultBodyWrapper']")
 
-  results.map do |result| 
+  json = doc.xpath("//script[contains(text(), 'LMI.Data.listings')]")[0].content
+  jsondata = parse_json(json)
+
+  results = doc.xpath("//div[contains(@class, 'resultBody') and @class!='resultBodyWrapper']")
+  htmldata = results.map do |result|
     parse_property result
+  end
+
+  # pull from HTML what json doesn't have
+  htmldata.map do |h|
+    data = jsondata.find { |j| j[:id] == h.unique_id }
+    data[:photo_url] = h.photo_url
+    data
   end
 end
 
@@ -72,11 +110,14 @@ def post_prop(prop)
   # day property[seen_date(3i)]
 
   post_data = Net::HTTP.post_form(URI.parse('http://localhost:3000/properties'), {
-      'property[title]'=> prop.title,
-      'property[site_id]'=> prop.site_id,
-      'property[url]'=> prop.url,
-      'property[photo_url]'=> prop.photo_url,
-      'property[price_string]'=> prop.price_string,
+      'property[title]'=> prop[:title],
+      'property[unique_id]'=> prop[:id],
+      'property[url]'=> prop[:url],
+      'property[photo_url]'=> prop[:photo_url],
+      'property[display_price]'=> prop[:display_price],
+      'property[latitude]' => prop[:latitude],
+      'property[longitude]' => prop[:longitude],
+      'property[note]' => prop[:note],
       'commit' => 'Create Property'
     }
   )
@@ -94,6 +135,6 @@ puts data
 
 # send data to new web service
 data.each do |prop|
- post_prop(prop)
+  post_prop(prop)
 end
 

@@ -2,18 +2,24 @@
 
 one:
   title: MyString
-  site_id: MyString
+  unique_id: MyString
   url: MyString
   photo_url: MyString
   address: MyString
-  seen_date: 2012-04-12
-  price_string: MyString
+  seen_date: 2012-04-18
+  display_price: MyString
+  note: MyString
+  latitude: 1.5
+  longitude: 1.5
 
 two:
   title: MyString
-  site_id: MyString
+  unique_id: MyString
   url: MyString
   photo_url: MyString
   address: MyString
-  seen_date: 2012-04-12
-  price_string: MyString
+  seen_date: 2012-04-18
+  display_price: MyString
+  note: MyString
+  latitude: 1.5
+  longitude: 1.5

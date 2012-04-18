@@ -16,8 +16,8 @@
     <%= f.text_field :title %>
   </div>
   <div class="field">
-    <%= f.label :site_id %><br />
-    <%= f.text_field :site_id %>
+    <%= f.label :unique_id %><br />
+    <%= f.text_field :unique_id %>
   </div>
   <div class="field">
     <%= f.label :url %><br />
@@ -36,8 +36,20 @@
     <%= f.date_select :seen_date %>
   </div>
   <div class="field">
-    <%= f.label :price_string %><br />
-    <%= f.text_field :price_string %>
+    <%= f.label :display_price %><br />
+    <%= f.text_field :display_price %>
+  </div>
+  <div class="field">
+    <%= f.label :note %><br />
+    <%= f.text_field :note %>
+  </div>
+  <div class="field">
+    <%= f.label :latitude %><br />
+    <%= f.text_field :latitude %>
+  </div>
+  <div class="field">
+    <%= f.label :longitude %><br />
+    <%= f.text_field :longitude %>
   </div>
   <div class="actions">
     <%= f.submit %>

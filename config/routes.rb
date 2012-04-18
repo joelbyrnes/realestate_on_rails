@@ -1,4 +1,6 @@
 RealestateRails::Application.routes.draw do
+  get "maps/all"
+
   resources :properties
 
   # The priority is based upon order of creation:

@@ -5,8 +5,7 @@
     <th>Photo</th>
     <th>Title</th>
     <th>Price</th>
-    <th>Address</th>
-    <th>Seen date</th>
+    <th>Seen</th>
     <th></th>
     <th></th>
     <th></th>
@@ -21,16 +20,19 @@
     </td>
     <td>
       <a href='<%= property.url %>'>
-        <span class="site_id"><%= property.site_id %></span><br/>
+        <span class="unique_id"><%= property.unique_id %></span><br/>
 		<span class="title"><%= property.title %></span><br/>
       </a>
     </td>
-    <td><%= property.price_string %></td>
-    <td><%= property.address %></td>
-    <td><%= property.seen_date %></td>
+    <td><%= property.display_price %></td>
+    <td><%= property.seen_date %><br/></td>
     <td><%= link_to 'Show', property %></td>
     <td><%= link_to 'Edit', edit_property_path(property) %></td>
     <td><%= link_to 'Destroy', property, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td colspan=7><%= property.note %></td>
   </tr>
 <% end %>
 </table>

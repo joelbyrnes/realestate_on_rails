@@ -12,7 +12,7 @@
  *= require_tree .
 */
 
-.site_id {
+.unique_id {
     font-size: smaller;
 }
 

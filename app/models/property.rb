@@ -1,3 +1,3 @@
 class Property < ActiveRecord::Base
-  attr_accessible :address, :photo_url, :price_string, :seen_date, :site_id, :title, :url
+  attr_accessible :address, :display_price, :latitude, :longitude, :note, :photo_url, :seen_date, :title, :unique_id, :url
 end
