@@ -28,4 +28,6 @@ ActiveRecord::Schema.define(:version => 20120418102849) do
     t.datetime "updated_at",    :null => false
   end
 
+  add_index "properties", %w(unique_id), :name => "index_properties_on_unique_id", :unique => true
+
 end

@@ -68,7 +68,7 @@ def parse_json(json)
 
   data = JSON.parse(json)
 
-  keys = ["id", "name", "city", "displayPrice", "latitude", "longitude", "prettyDetailsUrl", "note"]
+  keys = %w(id name city displayPrice latitude longitude prettyDetailsUrl note)
 
   data.map { |d|
     {

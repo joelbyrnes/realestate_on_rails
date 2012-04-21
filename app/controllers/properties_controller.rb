@@ -40,6 +40,12 @@ class PropertiesController < ApplicationController
   # POST /properties
   # POST /properties.json
   def create
+    prop = Property.find_by_unique_id(params[:unique_id])
+    # TODO log?
+    puts prop
+    # TODO this doesn't seem to stop here?
+    raise ArgumentError, "Unique ID is already in use" if prop != nil
+
     @property = Property.new(params[:property])
 
     respond_to do |format|
@@ -56,7 +62,12 @@ class PropertiesController < ApplicationController
   # PUT /properties/1
   # PUT /properties/1.json
   def update
-    @property = Property.find(params[:id])
+    # if updated by parser, which does not have the internal ID, update by external unique_id
+    if params[:id].nil?
+      @property = Property.Property.find_by_unique_id(params[:unique_id])
+    else
+      @property = Property.find(params[:id])
+    end
 
     respond_to do |format|
       if @property.update_attributes(params[:property])
