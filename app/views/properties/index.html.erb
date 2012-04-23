@@ -1,17 +1,9 @@
 <h1>Listing properties</h1>
 
-<a href="/maps/all">Map</a>
+<a href="/maps/all">Map</a><br/>
+<br/>
 
 <table class="properties">
-  <tr>
-    <th>Photo</th>
-    <th>Title</th>
-    <th>Price</th>
-    <th>Seen</th>
-    <th></th>
-    <th></th>
-    <th></th>
-  </tr>
 
 <% @properties.each do |property| %>
   <tr>
@@ -22,8 +14,10 @@
     </td>
     <td>
       <a href='<%= property.url %>'>
-        <span class="unique_id">RE <%= property.unique_id %></span><br/>
 		<span class="title"><%= property.title %></span><br/>
+        <% property.inspections.each do |inspection| %>
+            <%= inspection.start %>&nbsp;<%= inspection.end %><br/>
+        <% end %>
       </a>
     </td>
     <td><%= property.display_price %></td>
