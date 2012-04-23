@@ -4,64 +4,42 @@ require 'net/http'
 require 'uri'
 require 'json'
 
-class PropertyImport
-  attr_accessor :title, :unique_id, :url, :photo_url, :address, :price_string, :note
-  
-  def initialize(unique_id)
-    @unique_id = unique_id
-  end
-  
-  def to_s
-    "Property: " + @unique_id + ", " + @title
-  end
-end
-
 def parse_property(result)
   div_propInfo = result.xpath(".//div[@class='propertyInfo']")[0]
   a_prop = div_propInfo.xpath(".//a[@rel='listingName']")[0]
 
-  url = "http://www.realestate.com.au" + a_prop['href']
-  id = /\d+/.match(url)[0]
+  prop = {}
 
-  prop = PropertyImport.new(id)
-  prop.url = url
+  prop[:id] = /\d+/.match(a_prop['href'])[0]
+  puts prop[:id]
 
-  prop.title = a_prop.content
+  prop[:photo_url] = div_propInfo.xpath(".//div[@class='photo']/a/img")[0]['src']
+  puts prop[:photo_url]
 
-  img_photo = div_propInfo.xpath(".//div[@class='photo']/a/img")[0]
-  prop.photo_url = img_photo['src']
-
-  puts prop.unique_id
-  puts prop.title
-  puts prop.url
-  puts prop.photo_url
-  
   times = result.xpath(".//div[@class='times']")[0]
-  date = times.xpath(".//ul/li[@class='date']")[0].content
-  time = times.xpath(".//ul/li/span")[0].content
-  puts date
-  puts time
+  date_content = times.xpath(".//ul/li[@class='date']")[0].content
+  # TODO this only grabs the first timeslot, sometimes there is more LI
+  time_content = times.xpath(".//ul/li/span")[0].content
 
-  p_price = result.xpath(".//div[@class='priceInfo']/p")[0]
-  if p_price['title']
-    prop.price_string = p_price['title']
-  else
-    prop.price_string = p_price.xpath(".//span[@class='hidden']")[0].content.sub(" none", "")
-  end
-  puts prop.price_string
+  times = time_content.split(" - ")
+  time_start = DateTime.strptime(date_content + " " + times[0], '%a %d - %b %I:%M%p')
+  time_end = DateTime.strptime(date_content + " " + times[1], '%a %d - %b %I:%M%p')
+  puts time_start
+  puts time_end
 
-  note_p = result.xpath(".//div[@class='note']/p")[0]
-  if note_p
-    prop.note = "(from RE) " + note_p.content
-    puts prop.note
-  end
+  # TODO use a 2nd table for inspections
+  inspections = { start: time_start, end: time_end}
+
+  prop[:inspections] = inspections
+  prop[:inspection_start] = time_start
+  prop[:inspection_end] = time_end
 
   return prop
 end
 
 def parse_json(json)
   # remove variable declaration and following crap
-  json = json.sub("LMI.Data.listings=", '').sub(";", "")
+  json = json.sub("LMI.Data.listings=", '').sub("];", "]")
   json = json.sub(/LMI.Data.listGroup.*/, '')
   # wrap the keys in quotes
   json = json.gsub(/([A-Za-z0-9]+):/, '"\1":')
@@ -72,14 +50,14 @@ def parse_json(json)
 
   data.map { |d|
     {
-        :id => d["id"],
-        :title => d["name"],
-        :city => d["city"],
-        :display_price => d["displayPrice"],
-        :latitude => d["latitude"],
-        :longitude => d["longitude"],
-        :url => "http://www.realestate.com.au" + d["prettyDetailsUrl"],
-        :note => d["note"] == "" ? "" : "(from RE) " + d["note"]
+        id: d["id"],
+        title: d["name"],
+        city: d["city"],
+        display_price: d["displayPrice"],
+        latitude: d["latitude"],
+        longitude: d["longitude"],
+        url: "http://www.realestate.com.au" + d["prettyDetailsUrl"],
+        note: d["note"] == "" ? "" : "(from RE) " + d["note"]
     }
   }
 end
@@ -96,9 +74,10 @@ def parse_inspections(html)
   end
 
   # pull from HTML what json doesn't have
+  # TODO some way to merge hashmaps on id?
   htmldata.map do |h|
-    data = jsondata.find { |j| j[:id] == h.unique_id }
-    data[:photo_url] = h.photo_url
+    data = jsondata.find { |j| j[:id] == h[:id] }
+    data[:photo_url] = h[:photo_url]
     data
   end
 end
@@ -110,11 +89,11 @@ def post_prop(prop)
   # day property[seen_date(3i)]
 
   post_data = Net::HTTP.post_form(URI.parse('http://localhost:3000/properties'), {
-      'property[title]'=> prop[:title],
-      'property[unique_id]'=> prop[:id],
-      'property[url]'=> prop[:url],
-      'property[photo_url]'=> prop[:photo_url],
-      'property[display_price]'=> prop[:display_price],
+      'property[title]' => prop[:title],
+      'property[unique_id]' => prop[:id],
+      'property[url]' => prop[:url],
+      'property[photo_url]' => prop[:photo_url],
+      'property[display_price]' => prop[:display_price],
       'property[latitude]' => prop[:latitude],
       'property[longitude]' => prop[:longitude],
       'property[note]' => prop[:note],
