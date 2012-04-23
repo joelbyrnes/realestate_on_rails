@@ -11,7 +11,16 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120418102849) do
+ActiveRecord::Schema.define(:version => 20120422041009) do
+
+  create_table "inspections", :force => true do |t|
+    t.datetime "start"
+    t.datetime "end"
+    t.string   "note"
+    t.integer  "property_id"
+    t.datetime "created_at",  :null => false
+    t.datetime "updated_at",  :null => false
+  end
 
   create_table "properties", :force => true do |t|
     t.string   "title"
@@ -28,6 +37,6 @@ ActiveRecord::Schema.define(:version => 20120418102849) do
     t.datetime "updated_at",    :null => false
   end
 
-  add_index "properties", %w(unique_id), :name => "index_properties_on_unique_id", :unique => true
+  add_index "properties", ["unique_id"], :name => "index_properties_on_unique_id", :unique => true
 
 end

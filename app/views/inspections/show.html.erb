@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Start:</b>
+  <%= @inspection.start %>
+</p>
+
+<p>
+  <b>End:</b>
+  <%= @inspection.end %>
+</p>
+
+<p>
+  <b>Note:</b>
+  <%= @inspection.note %>
+</p>
+
+<p>
+  <b>Property:</b>
+  <%= @inspection.property_id %>
+</p>
+
+
+<%= link_to 'Edit', edit_inspection_path(@inspection) %> |
+<%= link_to 'Back', inspections_path %>

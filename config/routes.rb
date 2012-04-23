@@ -1,4 +1,6 @@
 RealestateRails::Application.routes.draw do
+  resources :inspections
+
   get "maps/all"
 
   resources :properties

@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  start: 2012-04-22 14:10:13
+  end: 2012-04-22 14:10:13
+  note: MyString
+  property_id: 1
+
+two:
+  start: 2012-04-22 14:10:13
+  end: 2012-04-22 14:10:13
+  note: MyString
+  property_id: 1
