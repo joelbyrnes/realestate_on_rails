@@ -4,8 +4,14 @@ class PropertiesController < ApplicationController
   def index
     @properties = Property.all
 
+    # TODO why do I have to do this? why does the JSON not contain it?
+    @properties.each { |p|
+      p["inspections"] = p.inspections
+    }
+
     respond_to do |format|
       format.html # index.html.erb
+      #format.json { render json: {properties: @properties, inspections: @inspections} }
       format.json { render json: @properties }
     end
   end

@@ -34,12 +34,27 @@
             map: map
         });
 
-        google.maps.event.addListener(marker, 'click', (function(marker, i) {
+        text = locations[i][0];
+
+        addInfoWindow(marker, text);
+
+//        google.maps.event.addListener(marker, 'click', (function(marker, content) {
+//            return function() {
+//                // to do multiple windows open at once, create a new infowindow here instead of reusing the one.
+//                infowindow.setContent(content);
+//                infowindow.open(map, marker);
+//            }
+//        })(marker, text));
+    }
+
+    function addInfoWindow(marker, content) {
+        google.maps.event.addListener(marker, 'click', (function(marker, content) {
             return function() {
-                infowindow.setContent(locations[i][0]);
+                // to do multiple windows open at once, create a new infowindow here instead of reusing the one.
+                infowindow.setContent(content);
                 infowindow.open(map, marker);
             }
-        })(marker, i));
+        })(marker, text));
     }
 </script>
 </body>
