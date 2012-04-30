@@ -18,13 +18,14 @@ def parse_property(result)
 
   times_lis = times.xpath(".//ul/li/span")
 
+  # go queensland!
   tz = "+10:00"
 
   prop[:inspections] = times_lis.map { |li|
     times = li.content.split(" - ")
     time_start = DateTime.strptime(date_content + " " + times[0] + tz, '%a %d - %b %I:%M%p%z')
     time_end = DateTime.strptime(date_content + " " + times[1] + tz, '%a %d - %b %I:%M%p%z')
-    { start: time_start, end: time_end}
+    { start: time_start, end: time_end }
   }
   puts "#{prop[:id]} - #{prop[:inspections]}"
 
@@ -72,6 +73,7 @@ def parse_inspections(html)
   htmldata.map do |h|
     data = jsondata.find { |j| j[:id] == h[:id] }
     data[:photo_url] = h[:photo_url]
+    data[:inspections] = h[:inspections]
     data
   end
 end
@@ -97,13 +99,58 @@ def post_prop(prop)
 
   puts "create property #{prop[:title]}: #{response.code}: #{response.message}"
 
-  if response.code == "200" || response.code == "302"
-    puts "Success creating or updating"
+  #puts response.body if response.is_a?(Net::HTTPSuccess)
+  #puts response.body if response.is_a?(Net::HTTPRedirection)
+
+  if response.is_a?(Net::HTTPSuccess)
+    puts "Success creating or updating: 200 OK"
+  elsif response.is_a?(Net::HTTPRedirection)
+    location = response['location']
+    puts "Success creating or updating: 302 Redirected to #{location}"
+    # eg http://localhost:3000/properties/1
+    /properties\/(\d+)/.match(location)[1]
   else
     puts "fail: Response #{response.code}, #{response.message}"
-
   end
+end
 
+def post_inspection(id, inspection)
+  # ignore note
+  # TODO what time format will this accept?
+  data = {
+      'inspection[property_id]' => id,
+      'inspection[start]' => inspection[:start].to_s,
+      'inspection[end]' => inspection[:end].to_s,
+      'commit' => 'Create Inspection'
+  }
+
+  # TODO should check if these times already exist for this property
+
+  uri = URI.parse('http://localhost:3000/inspections')
+
+  response = Net::HTTP.post_form(uri, data)
+
+  puts "create inspection: #{response.code}: #{response.message}"
+
+  if response.is_a?(Net::HTTPSuccess)
+    puts "Success creating or updating: 200 OK"
+  elsif response.is_a?(Net::HTTPRedirection)
+    location = response['location']
+    puts "Success creating or updating: 302 Redirected to #{location}"
+    # eg http://localhost:3000/inspections/1
+    /inspections\/(\d+)/.match(location)[1]
+  else
+    puts "fail: Response #{response.code}, #{response.message}"
+  end
+end
+
+def create_or_update(prop)
+  id = post_prop(prop)
+  puts id
+  if prop[:inspections] != nil
+    puts prop[:inspections]
+    prop[:inspections].each { |i| post_inspection(id, i) }
+  end
 end
 
 htmlfile = File.open('../inspection_times.html')
@@ -112,10 +159,10 @@ htmlfile.close
 
 data = parse_inspections html
 
-# send data to new web service
 data.each do |prop|
-  post_prop(prop)
+  create_or_update(prop)
 end
 
-#post_prop(data[0])
+#create_or_update(data[1])
+
 
