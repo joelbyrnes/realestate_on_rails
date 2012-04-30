@@ -1,8 +1,7 @@
 require 'nokogiri'
-require 'open-uri'
 require 'net/http'
-require 'uri'
 require 'json'
+require 'active_support/core_ext'
 
 def parse_property(result)
   div_propInfo = result.xpath(".//div[@class='propertyInfo']")[0]
@@ -11,28 +10,23 @@ def parse_property(result)
   prop = {}
 
   prop[:id] = /\d+/.match(a_prop['href'])[0]
-  puts prop[:id]
 
   prop[:photo_url] = div_propInfo.xpath(".//div[@class='photo']/a/img")[0]['src']
-  puts prop[:photo_url]
 
   times = result.xpath(".//div[@class='times']")[0]
   date_content = times.xpath(".//ul/li[@class='date']")[0].content
-  # TODO this only grabs the first timeslot, sometimes there is more LI
-  time_content = times.xpath(".//ul/li/span")[0].content
 
-  times = time_content.split(" - ")
-  time_start = DateTime.strptime(date_content + " " + times[0], '%a %d - %b %I:%M%p')
-  time_end = DateTime.strptime(date_content + " " + times[1], '%a %d - %b %I:%M%p')
-  puts time_start
-  puts time_end
+  times_lis = times.xpath(".//ul/li/span")
 
-  # TODO use a 2nd table for inspections
-  inspections = { start: time_start, end: time_end}
+  tz = "+10:00"
 
-  prop[:inspections] = inspections
-  prop[:inspection_start] = time_start
-  prop[:inspection_end] = time_end
+  prop[:inspections] = times_lis.map { |li|
+    times = li.content.split(" - ")
+    time_start = DateTime.strptime(date_content + " " + times[0] + tz, '%a %d - %b %I:%M%p%z')
+    time_end = DateTime.strptime(date_content + " " + times[1] + tz, '%a %d - %b %I:%M%p%z')
+    { start: time_start, end: time_end}
+  }
+  puts "#{prop[:id]} - #{prop[:inspections]}"
 
   return prop
 end
@@ -83,14 +77,11 @@ def parse_inspections(html)
 end
 
 def post_prop(prop)
-  # POST http://localhost:3000/properties/create with property[title]...
-  # year property[seen_date(1i)]
-  # month property[seen_date(2i)]
-  # day property[seen_date(3i)]
+  # POST http://localhost:3000/properties with property[title]...
 
-  post_data = Net::HTTP.post_form(URI.parse('http://localhost:3000/properties'), {
+  data = {
       'property[title]' => prop[:title],
-      'property[unique_id]' => prop[:id],
+      'property[external_id]' => prop[:id],
       'property[url]' => prop[:url],
       'property[photo_url]' => prop[:photo_url],
       'property[display_price]' => prop[:display_price],
@@ -98,10 +89,21 @@ def post_prop(prop)
       'property[longitude]' => prop[:longitude],
       'property[note]' => prop[:note],
       'commit' => 'Create Property'
-    }
-  )
+  }
 
-  puts post_data.body
+  uri = URI.parse('http://localhost:3000/properties')
+
+  response = Net::HTTP.post_form(uri, data)
+
+  puts "create property #{prop[:title]}: #{response.code}: #{response.message}"
+
+  if response.code == "200" || response.code == "302"
+    puts "Success creating or updating"
+  else
+    puts "fail: Response #{response.code}, #{response.message}"
+
+  end
+
 end
 
 htmlfile = File.open('../inspection_times.html')
@@ -110,10 +112,10 @@ htmlfile.close
 
 data = parse_inspections html
 
-puts data
-
 # send data to new web service
 data.each do |prop|
   post_prop(prop)
 end
+
+#post_prop(data[0])
 

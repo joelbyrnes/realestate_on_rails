@@ -24,7 +24,7 @@ ActiveRecord::Schema.define(:version => 20120422041009) do
 
   create_table "properties", :force => true do |t|
     t.string   "title"
-    t.string   "unique_id"
+    t.string   "external_id"
     t.string   "url"
     t.string   "photo_url"
     t.string   "address"
@@ -37,6 +37,6 @@ ActiveRecord::Schema.define(:version => 20120422041009) do
     t.datetime "updated_at",    :null => false
   end
 
-  add_index "properties", ["unique_id"], :name => "index_properties_on_unique_id", :unique => true
+  add_index "properties", ["external_id"], :name => "index_properties_on_external_id", :unique => true
 
 end

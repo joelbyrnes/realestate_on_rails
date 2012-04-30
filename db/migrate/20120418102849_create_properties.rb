@@ -2,7 +2,7 @@ class CreateProperties < ActiveRecord::Migration
   def change
     create_table :properties do |t|
       t.string :title
-      t.string :unique_id
+      t.string :external_id
       t.string :url
       t.string :photo_url
       t.string :address
@@ -15,7 +15,7 @@ class CreateProperties < ActiveRecord::Migration
       t.timestamps
     end
 
-    add_index :properties, [:unique_id], :unique => true
+    add_index :properties, [:external_id], :unique => true
 
   end
 end

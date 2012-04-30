@@ -2,7 +2,11 @@ class PropertiesController < ApplicationController
   # GET /properties
   # GET /properties.json
   def index
-    @properties = Property.all
+    if params[:external_id]
+      @properties = Property.find_all_by_external_id(params[:external_id])
+    else
+      @properties = Property.all
+    end
 
     # TODO why do I have to do this? why does the JSON not contain it?
     @properties.each { |p|
@@ -46,21 +50,34 @@ class PropertiesController < ApplicationController
   # POST /properties
   # POST /properties.json
   def create
-    prop = Property.find_by_unique_id(params[:unique_id])
-    # TODO log?
-    puts prop
-    # TODO this doesn't seem to stop here?
-    raise ArgumentError, "Unique ID is already in use" if prop != nil
+    # update by external id
+    prop_params = params["property"]
+    puts "\n\nexternal id: #{prop_params[:external_id]}\n\n"
 
-    @property = Property.new(params[:property])
+    # TODO throw error if external_id is null, and/or make it not nullable in db.
+
+    @property = Property.find_by_external_id(prop_params[:external_id])
+
+    # TODO push this logic to Property.create_or_update
 
     respond_to do |format|
-      if @property.save
-        format.html { redirect_to @property, notice: 'Property was successfully created.' }
-        format.json { render json: @property, status: :created, location: @property }
+      if @property != nil
+        if @property.update_attributes(params[:property])
+          format.html { redirect_to @property, notice: 'Property was successfully updated.' }
+          format.json { head :no_content }
+        else
+          format.html { render action: "edit" }
+          format.json { render json: @property.errors, status: :unprocessable_entity }
+        end
       else
-        format.html { render action: "new" }
-        format.json { render json: @property.errors, status: :unprocessable_entity }
+        @property = Property.new(params[:property])
+        if @property.save
+          format.html { redirect_to @property, notice: 'Property was successfully created.' }
+          format.json { render json: @property, status: :created, location: @property }
+        else
+          format.html { render action: "new" }
+          format.json { render json: @property.errors, status: :unprocessable_entity }
+        end
       end
     end
   end
@@ -68,12 +85,7 @@ class PropertiesController < ApplicationController
   # PUT /properties/1
   # PUT /properties/1.json
   def update
-    # if updated by parser, which does not have the internal ID, update by external unique_id
-    if params[:id].nil?
-      @property = Property.Property.find_by_unique_id(params[:unique_id])
-    else
-      @property = Property.find(params[:id])
-    end
+    @property = Property.find(params[:id])
 
     respond_to do |format|
       if @property.update_attributes(params[:property])

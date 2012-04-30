@@ -18,7 +18,7 @@ class PropertiesControllerTest < ActionController::TestCase
 
   test "should create property" do
     assert_difference('Property.count') do
-      post :create, property: { address: @property.address, display_price: @property.display_price, latitude: @property.latitude, longitude: @property.longitude, note: @property.note, photo_url: @property.photo_url, seen_date: @property.seen_date, title: @property.title, unique_id: @property.unique_id, url: @property.url }
+      post :create, property: { address: @property.address, display_price: @property.display_price, external_id: @property.external_id, latitude: @property.latitude, longitude: @property.longitude, note: @property.note, photo_url: @property.photo_url, seen_date: @property.seen_date, title: @property.title, url: @property.url }
     end
 
     assert_redirected_to property_path(assigns(:property))
@@ -35,7 +35,7 @@ class PropertiesControllerTest < ActionController::TestCase
   end
 
   test "should update property" do
-    put :update, id: @property, property: { address: @property.address, display_price: @property.display_price, latitude: @property.latitude, longitude: @property.longitude, note: @property.note, photo_url: @property.photo_url, seen_date: @property.seen_date, title: @property.title, unique_id: @property.unique_id, url: @property.url }
+    put :update, id: @property, property: { address: @property.address, display_price: @property.display_price, external_id: @property.external_id, latitude: @property.latitude, longitude: @property.longitude, note: @property.note, photo_url: @property.photo_url, seen_date: @property.seen_date, title: @property.title, url: @property.url }
     assert_redirected_to property_path(assigns(:property))
   end
 
