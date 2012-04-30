@@ -3,6 +3,15 @@
 <a href="/maps/all">Map</a><br/>
 <br/>
 
+<% form_tag properties_path, :method => 'get' do %>
+    <p>
+      <%= text_field_tag :search, params[:search] %>
+      <%= submit_tag "Search", :name => nil %>
+    </p>
+<% end %>
+
+Showing <%= @properties.length %> properties
+
 <table class="properties">
 
 <% @properties.each do |property| %>
@@ -15,12 +24,13 @@
     <td>
       <a href='<%= property.url %>'>
 		<span class="title"><%= property.title %></span><br/>
+        <%= property.display_price %><br/>
         <% property.inspections.each do |inspection| %>
             <%= inspection.start %>&nbsp;<%= inspection.end %><br/>
         <% end %>
       </a>
     </td>
-    <td><%= property.display_price %></td>
+    <td></td>
     <td><%= property.seen_date %><br/></td>
     <td><%= link_to 'Show', property %></td>
     <td><%= link_to 'Edit', edit_property_path(property) %></td>
