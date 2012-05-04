@@ -153,16 +153,19 @@ def create_or_update(prop)
   end
 end
 
-htmlfile = File.open('../inspection_times.html')
-html = htmlfile.read
-htmlfile.close
+ARGV.each { |arg|
+  htmlfile = File.open(arg)
+  html = htmlfile.read
+  htmlfile.close
 
-data = parse_inspections html
+  data = parse_inspections html
 
-data.each do |prop|
-  create_or_update(prop)
-end
+  data.each do |prop|
+    create_or_update(prop)
+  end
 
-#create_or_update(data[1])
+  #create_or_update(data[1])
+}
+
 
 
