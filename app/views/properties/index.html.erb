@@ -10,7 +10,7 @@
     </p>
 <% end %>
 
-Showing <%= @properties.length %> properties
+Showing <%= @properties.length %> properties at <%= DateTime.now.in_time_zone("Brisbane") %>
 
 <table class="properties">
 
@@ -22,13 +22,13 @@ Showing <%= @properties.length %> properties
       </a>
     </td>
     <td>
-      <a href='<%= property.url %>'>
-		<span class="title"><%= property.title %></span><br/>
+        <a href='<%= property.url %>'>
+		    <span class="title"><%= property.title %></span><br/>
+        </a>
         <%= property.display_price %><br/>
         <% property.inspections.each do |inspection| %>
-            <%= inspection.start %>&nbsp;<%= inspection.end %><br/>
+          <a href='/inspections/<%= inspection.id %>'><%= inspection.start.in_time_zone("Brisbane") %> - <%= inspection.end.in_time_zone("Brisbane") %></a><br/>
         <% end %>
-      </a>
     </td>
     <td></td>
     <td><%= property.seen_date %><br/></td>

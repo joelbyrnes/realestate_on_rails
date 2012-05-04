@@ -51,8 +51,8 @@ class PropertiesController < ApplicationController
   # POST /properties.json
   def create
     # update by external id
-    prop_params = params["property"]
-    puts "\n\nexternal id: #{prop_params[:external_id]}\n\n"
+    prop_params = params[:property]
+    #puts "\n\nexternal id: #{prop_params[:external_id]}\n\n"
 
     # TODO throw error if external_id is null, and/or make it not nullable in db.
 
