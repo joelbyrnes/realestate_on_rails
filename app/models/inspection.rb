@@ -1,4 +1,3 @@
 class Inspection < ActiveRecord::Base
-  attr_accessible :end, :note, :property_id, :start
-  belongs_to :property
+  attr_accessible :end, :note, :property_id, :start, :timezone
 end

@@ -18,7 +18,7 @@ class InspectionsControllerTest < ActionController::TestCase
 
   test "should create inspection" do
     assert_difference('Inspection.count') do
-      post :create, inspection: { end: @inspection.end, note: @inspection.note, property_id: @inspection.property_id, start: @inspection.start }
+      post :create, inspection: { end: @inspection.end, note: @inspection.note, property_id: @inspection.property_id, start: @inspection.start, timezone: @inspection.timezone }
     end
 
     assert_redirected_to inspection_path(assigns(:inspection))
@@ -35,7 +35,7 @@ class InspectionsControllerTest < ActionController::TestCase
   end
 
   test "should update inspection" do
-    put :update, id: @inspection, inspection: { end: @inspection.end, note: @inspection.note, property_id: @inspection.property_id, start: @inspection.start }
+    put :update, id: @inspection, inspection: { end: @inspection.end, note: @inspection.note, property_id: @inspection.property_id, start: @inspection.start, timezone: @inspection.timezone }
     assert_redirected_to inspection_path(assigns(:inspection))
   end
 
