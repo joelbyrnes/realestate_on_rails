@@ -11,20 +11,21 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20120422041009) do
+ActiveRecord::Schema.define(:version => 20120508093836) do
 
   create_table "inspections", :force => true do |t|
     t.datetime "start"
     t.datetime "end"
     t.string   "note"
     t.integer  "property_id"
-    t.datetime "created_at",  :null => false
-    t.datetime "updated_at",  :null => false
+    t.datetime "created_at",                          :null => false
+    t.datetime "updated_at",                          :null => false
+    t.string   "timezone",    :default => "Brisbane"
   end
 
   create_table "properties", :force => true do |t|
     t.string   "title"
-    t.string   "external_id"
+    t.string   "external_id",                  :null => false
     t.string   "url"
     t.string   "photo_url"
     t.string   "address"
@@ -33,8 +34,9 @@ ActiveRecord::Schema.define(:version => 20120422041009) do
     t.string   "note"
     t.float    "latitude"
     t.float    "longitude"
-    t.datetime "created_at",    :null => false
-    t.datetime "updated_at",    :null => false
+    t.datetime "created_at",                   :null => false
+    t.datetime "updated_at",                   :null => false
+    t.integer  "rating",        :default => 0
   end
 
   add_index "properties", ["external_id"], :name => "index_properties_on_external_id", :unique => true
