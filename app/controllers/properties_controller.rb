@@ -52,9 +52,6 @@ class PropertiesController < ApplicationController
   def create
     # update by external id
     prop_params = params[:property]
-    #puts "\n\nexternal id: #{prop_params[:external_id]}\n\n"
-
-    # TODO throw error if external_id is null, and/or make it not nullable in db.
 
     @property = Property.find_by_external_id(prop_params[:external_id])
 
@@ -62,7 +59,7 @@ class PropertiesController < ApplicationController
 
     respond_to do |format|
       if @property != nil
-        if @property.update_attributes(params[:property])
+        if @property.update_attributes(prop_params)
           format.html { redirect_to @property, notice: 'Property was successfully updated.' }
           format.json { head :no_content }
         else

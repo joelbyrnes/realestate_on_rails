@@ -1,12 +1,12 @@
 
 var map;
-var markers = [];
+var properties = [];
 
 var infowindow = new google.maps.InfoWindow();
 
 function initialize() {
     var myOptions = {
-//              center: new google.maps.LatLng(-27.48, 153.01),
+//        center: new google.maps.LatLng(-27.48, 153.01),
         zoom: 8,
         mapTypeId: google.maps.MapTypeId.ROADMAP
     };
@@ -16,17 +16,20 @@ function initialize() {
 }
 
 function reload() {
-    // TODO remove all markers from map
-    for(var i=0; i < markers.length; i++){
-        markers[i].setMap(null);
+    // remove all markers from map
+    for(var i=0; i < properties.length; i++){
+        properties[i].marker.setMap(null);
     }
-    markers = [];
 
     // reload JS, then reload the properties.
     $.get("/js/maps.js", null, function(data) {
 //        document.append(data);
         load_properties();
     });
+}
+
+function recalculate() {
+    colourPinsByTime(properties);
 }
 
 function getPinImage(pinColor) {
@@ -38,7 +41,7 @@ function getPinImage(pinColor) {
 
 var defaultPinImage = getPinImage('FE7569');
 var currentPinImage = getPinImage('FF0000');
-var lastPinImage = getPinImage('AA6600');
+var lastPinImage = getPinImage('CCAAAA');
 var pastPinImage = getPinImage('666666');
 var nextPinImage = getPinImage('00FF00');
 var futurePinImage = getPinImage('0000FF');
@@ -51,11 +54,8 @@ var pinShadow = new google.maps.MarkerImage("http://chart.apis.google.com/chart?
 
 // TODO load pin colours in advance
 
-var properties = [];
-
 function handle_properties(props) {
-    properties = props;
-    var marker, content;
+    var marker;
 
     var prop;
     for (var i=0; i < props.length; i++) {
@@ -69,7 +69,6 @@ function handle_properties(props) {
             shadow: pinShadow
 
         });
-        markers.push(marker);
         prop.marker = marker;
 
         var insStr = "";
@@ -82,27 +81,44 @@ function handle_properties(props) {
             insStr = insStr + (ins.note? " (" + ins.note + ")" : "") + "<br/>";
         });
 
-        var htmlString = "<a href=\"" + prop.url + "\"><b>" + prop.title + "</b><a/><br/>"
+        var htmlString = "<span class='infoWindow'><a href=\"" + prop.url + "\"><b>" + prop.title + "</b><a/><br/>"
             + "Price: " + prop.display_price + "<br/>"
             + "Note: " + prop.note + "<br/>"
             + "Inspections:<br/>"
-            + insStr;
+            + insStr
+            + "</span>";
 
         addInfoWindow(marker, htmlString)
     }
 
-    auto_center();
+    // if first load, auto center on the properties
+    if (properties.length == 0) {
+        auto_center(props);
+    }
 
     // TODO after markers are loaded, re-process to change pin colour/icon.
     // TODO re-process again regularly with current time.
     colourPinsByTime(props);
+
+    properties = props;
 }
 
 function colourPinsByTime(props) {
     var now = Date.now();
+//    alert(now);
+//    $.each(props, function(index, prop) {
+//        if (now.compareTo(prop.inspections[0].endDate.addMinutes(10)) > 0) {
+//            // remove from map
+//            prop.marker.setMap(null);
+//        } else {
+//            prop.marker.setIcon(decidePinImage(now, prop.inspections));
+//        }
+//    });
     $.each(props, function(index, prop) {
         prop.marker.setIcon(decidePinImage(now, prop.inspections));
     });
+
+//    prop.marker.setIcon(decidePinImage(now, props[0].inspections));
 }
 
 /*
@@ -113,24 +129,38 @@ starts less than 45 minutes in future - next
 starts in more than 45 minutes in future - future
  */
 function decidePinImage(now, inspections) {
-    $.each(inspections, function(index, open) {
-//        if (open.startDate.compareTo(now.add(45).minutes()) > 1) {
-//            return futurePinImage;
-//        }
-//        alert(open.startDate);
-        if (now.compareTo(open.startDate) < 0) {
-            return futurePinImage;
-        }
+    var open = getNextInspection(inspections);
 
-        if (now.between(open.startDate, open.endDate)) {
-            return currentPinImage;
-        }
+    if (now.compareTo(open.startDate.addMinutes(30)) <= 0) {
+        return futurePinImage;
+    }
 
-        if (now.compareTo(open.endDate) > 0) {
-            return pastPinImage;
-        }
+    if (now.compareTo(open.startDate) <= 0) {
+        return nextPinImage;
+    }
+
+    if (now.between(open.startDate, open.endDate)) {
+        return currentPinImage;
+    }
+
+    if (now.compareTo(open.endDate.addMinutes(10)) >= 0) {
+        return lastPinImage;
+    }
+
+    if (now.compareTo(open.endDate.addMinutes(40)) > 0) {
+        return pastPinImage;
+    }
+    return defaultPinImage;
+}
+
+function getNextInspection(inspections) {
+    if (inspections.length == 1) return inspections[0];
+    var now = Date.now();
+    var value = inspections[0];
+    $.each(inspections, function(index, inspection) {
+        if (inspection.startDate.compareTo(value.startDate) < 0) value = inspection;
     });
-//    return defaultPinImage;
+    return value;
 }
 
 function addInfoWindow(marker, infocontent) {
@@ -147,12 +177,12 @@ function load_properties() {
     $.getJSON("/properties.json", null, handle_properties)
 }
 
-function auto_center() {
+function auto_center(props) {
     //  Create a new viewpoint bound
     var bounds = new google.maps.LatLngBounds();
     //  Go through each...
-    $.each(markers, function (index, marker) {
-        bounds.extend(marker.position);
+    $.each(props, function (index, prop) {
+        bounds.extend(prop.marker.position);
     });
     //  Fit these bounds to the map
     map.fitBounds(bounds);
