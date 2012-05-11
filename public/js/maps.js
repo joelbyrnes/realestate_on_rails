@@ -81,7 +81,10 @@ function handle_properties(props) {
             insStr = insStr + (ins.note? " (" + ins.note + ")" : "") + "<br/>";
         });
 
-        var htmlString = "<span class='infoWindow'><a href=\"" + prop.url + "\"><b>" + prop.title + "</b><a/><br/>"
+        var htmlString = "<span class='infoWindow'>"
+            + "<a target='_blank' href=\"http://maps.google.com/maps?saddr=Current+Location&daddr=" + prop.title + "\"><b>" + prop.title + "</b><a/><br/>"
+            + "&nbsp;<a target='_blank' href=\"" + prop.url + "\">URL</a>"
+            + "&nbsp;<a target='_blank' href='/properties/" + prop.id + "'>Show</a><br/>"
             + "Price: " + prop.display_price + "<br/>"
             + "Note: " + prop.note + "<br/>"
             + "Inspections:<br/>"
@@ -121,43 +124,49 @@ function colourPinsByTime(props) {
 //    prop.marker.setIcon(decidePinImage(now, props[0].inspections));
 }
 
-/*
-inside a 30 minute time period eg 10-10:30  - current
-ended up to 45 minutes ago - last
-more than 45 minutes ago - old
-starts less than 45 minutes in future - next
-starts in more than 45 minutes in future - future
- */
 function decidePinImage(now, inspections) {
     var open = getNextInspection(inspections);
+    if (open == null) return defaultPinImage;
 
-    if (now.compareTo(open.startDate.addMinutes(30)) <= 0) {
-        return futurePinImage;
-    }
-
-    if (now.compareTo(open.startDate) <= 0) {
-        return nextPinImage;
-    }
-
-    if (now.between(open.startDate, open.endDate)) {
+    // if the start date was before now and the end date is after now
+    if (now.between(open.startDate.addMinutes(-5), open.endDate.addMinutes(10))) {
+        alert(open.startDate + " - " + open.endDate + " current");
         return currentPinImage;
     }
 
+    // if the open time is more than 30 minutes away
+    if (now.addMinutes(30).compareTo(open.startDate) < 0) {
+        return futurePinImage;
+    }
+
+    // if the open time is in less than 30 minutes
+    if (now.compareTo(open.startDate) <= 0) {
+        alert(open.startDate + " next");
+        return nextPinImage;
+    }
+
+    // if the end was less than 40 minutes ago
+    if (now.compareTo(open.endDate.addMinutes(40)) > 0) {
+//        alert(open.endDate + " past");
+        return pastPinImage;
+    }
+
     if (now.compareTo(open.endDate.addMinutes(10)) >= 0) {
+        alert(open.endDate + " last");
         return lastPinImage;
     }
 
-    if (now.compareTo(open.endDate.addMinutes(40)) > 0) {
-        return pastPinImage;
-    }
     return defaultPinImage;
 }
 
 function getNextInspection(inspections) {
+    if (inspections.length == 0) return null;
     if (inspections.length == 1) return inspections[0];
     var now = Date.now();
     var value = inspections[0];
     $.each(inspections, function(index, inspection) {
+        // if this is in the past, ignore it if there are later values
+        if (inspection.startDate.compareTo(now) < 0) return;
         if (inspection.startDate.compareTo(value.startDate) < 0) value = inspection;
     });
     return value;
@@ -187,3 +196,38 @@ function auto_center(props) {
     //  Fit these bounds to the map
     map.fitBounds(bounds);
 }
+
+var userLocation = null;
+var userLocationRadius;
+var userLocationImage = new google.maps.MarkerImage("/images/blue3.png",
+    new google.maps.Size(30, 30), new google.maps.Point(0, 0),
+    new google.maps.Point(7, 7), new google.maps.Size(15, 15));
+
+navigator.geolocation.watchPosition(function(position) {
+    var userPos = new google.maps.LatLng(position.coords.latitude,
+        position.coords.longitude);
+
+    if (!userLocation) {
+        // Center the map on the new position
+        map.setCenter(userPos);
+
+        // Marker does not exist - Create it
+        userLocation = new google.maps.Marker({
+            position: userPos,
+            map: map,
+            icon: userLocationImage
+        });
+
+        userLocationRadius = new google.maps.Circle({
+            map: map,
+            radius: position.coords.accuracy,    // in metres
+            fillColor: '#5555FF',
+            strokeColor:  '#5555FF',
+            strokeWeight: 1
+        });
+    }
+
+    userLocation.setPosition(userPos);
+    userLocationRadius.setRadius(position.coords.accuracy);
+    userLocationRadius.bindTo('center', userLocation, 'position');
+});
