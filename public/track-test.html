@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        html { height: 100% }
+        body { height: 100%; margin: 0; padding: 0 }
+        #map_canvas { height: 100% }
+    </style>
+    <script type="text/javascript"
+            src="http://maps.googleapis.com/maps/api/js?key=AIzaSyANAOHPxsJJLf37uzJspHUzGNvc0A87xN8&sensor=true">
+    </script>
+    <script type="text/javascript">
+
+        var map;
+
+        function initialize() {
+            var myOptions = {
+                center: new google.maps.LatLng(-27.47, 153.2),
+                zoom: 14,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+            map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+        }
+
+    </script>
+    <script type="text/javascript">
+
+        var userLocation = null;
+        var userLocationRadius;
+        var userLocationImage = new google.maps.MarkerImage("/images/blue3.png",
+                new google.maps.Size(30, 30), new google.maps.Point(0, 0),
+                new google.maps.Point(7, 7), new google.maps.Size(15, 15));
+
+        navigator.geolocation.watchPosition(function(position) {
+            var userPos = new google.maps.LatLng(position.coords.latitude,
+                    position.coords.longitude);
+
+            if (!userLocation) {
+                // Marker does not exist - Create it
+                userLocation = new google.maps.Marker({
+                    position: userPos,
+                    map: map,
+                    icon: userLocationImage
+                });
+
+                userLocationRadius = new google.maps.Circle({
+                    map: map,
+                    radius: position.coords.accuracy,    // in metres
+                    fillColor: '#5555FF',
+                    strokeColor:  '#5555FF',
+                    strokeWeight: 1
+                });
+            }
+
+            userLocation.setPosition(userPos);
+            userLocationRadius.setRadius(position.coords.accuracy);
+            userLocationRadius.bindTo('center', userLocation, 'position');
+
+            // Center the map on the new position
+            map.setCenter(userPos);
+        });
+
+    </script>
+</head>
+<body onload="initialize()">
+<a href="#reload" onclick="reload(); return false;">Reload</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<div id="map_canvas" style="width:100%; height:100%"></div>
+
+</body>
+</html>
