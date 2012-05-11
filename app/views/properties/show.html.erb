@@ -56,5 +56,34 @@
 </p>
 
 
+<b>Inspections:</b>
+<table>
+  <tr>
+    <th>Start</th>
+    <th>End</th>
+    <th>Timezone</th>
+    <th>Note</th>
+    <th>Property</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+  <% @property.inspections.each do |inspection| %>
+      <tr>
+        <td><%= inspection.start.in_time_zone(inspection.timezone) %></td>
+        <td><%= inspection.end.in_time_zone(inspection.timezone) %></td>
+        <td><%= inspection.timezone %></td>
+        <td><%= inspection.note %></td>
+        <td><%= inspection.property_id %></td>
+        <td><%= link_to 'Show', inspection %></td>
+        <td><%= link_to 'Edit', edit_inspection_path(inspection) %></td>
+        <td><%= link_to 'Destroy', inspection, confirm: 'Are you sure?', method: :delete %></td>
+      </tr>
+  <% end %>
+</table>
+
+
+
 <%= link_to 'Edit', edit_property_path(@property) %> |
 <%= link_to 'Back', properties_path %>

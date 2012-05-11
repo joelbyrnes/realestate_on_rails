@@ -99,9 +99,6 @@ def post_prop(prop)
 
   puts "create property #{prop[:title]}: #{response.code}: #{response.message}"
 
-  #puts response.body if response.is_a?(Net::HTTPSuccess)
-  #puts response.body if response.is_a?(Net::HTTPRedirection)
-
   if response.is_a?(Net::HTTPSuccess)
     puts "Success creating or updating: 200 OK"
   elsif response.is_a?(Net::HTTPRedirection)
@@ -121,6 +118,8 @@ def post_inspection(id, inspection)
       'inspection[property_id]' => id,
       'inspection[start]' => inspection[:start].to_s,
       'inspection[end]' => inspection[:end].to_s,
+      # hardcoding the timezone here
+      'inspection[timezone]' => "Brisbane",
       'commit' => 'Create Inspection'
   }
 

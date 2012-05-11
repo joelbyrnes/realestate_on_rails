@@ -1,6 +1,6 @@
 <h1>Listing properties</h1>
 
-<a href="/maps/all">Inspections today</a><br/>
+<a href="/maps/all">Show all on map</a><br/>
 <br/>
 
 <% form_tag properties_path, :method => 'get' do %>
@@ -27,7 +27,7 @@ Showing <%= @properties.length %> properties at <%= DateTime.now.in_time_zone("B
         </a>
         <%= property.display_price %><br/>
         <% property.inspections.each do |inspection| %>
-          <a href='/inspections/<%= inspection.id %>'><%= inspection.start.in_time_zone("Brisbane") %> - <%= inspection.end.in_time_zone("Brisbane") %></a><br/>
+          <a href='/inspections/<%= inspection.id %>'><%= inspection.start.in_time_zone(inspection.timezone) %> - <%= inspection.end.in_time_zone(inspection.timezone) %></a><br/>
         <% end %>
     </td>
     <td></td>

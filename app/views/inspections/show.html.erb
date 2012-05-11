@@ -2,12 +2,12 @@
 
 <p>
   <b>Start:</b>
-  <%= @inspection.start %>
+  <%= @inspection.start.in_time_zone(@inspection.timezone) %>
 </p>
 
 <p>
   <b>End:</b>
-  <%= @inspection.end %>
+  <%= @inspection.end.in_time_zone(@inspection.timezone) %>
 </p>
 
 <p>
