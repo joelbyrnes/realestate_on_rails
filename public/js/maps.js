@@ -40,11 +40,11 @@ function getPinImage(pinColor) {
 }
 
 var defaultPinImage = getPinImage('FE7569');
-var currentPinImage = getPinImage('FF0000');
+var currentPinImage = getPinImage('00FF00');
 var lastPinImage = getPinImage('CCAAAA');
 var pastPinImage = getPinImage('666666');
-var nextPinImage = getPinImage('00FF00');
-var futurePinImage = getPinImage('0000FF');
+var nextPinImage = getPinImage('FFCC00');
+var futurePinImage = getPinImage('6666FF');
 
 
 var pinShadow = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_shadow",
@@ -82,7 +82,8 @@ function handle_properties(props) {
         });
 
         var htmlString = "<span class='infoWindow'>"
-            + "<a target='_blank' href=\"http://maps.google.com/maps?saddr=Current+Location&daddr=" + prop.title + "\"><b>" + prop.title + "</b><a/><br/>"
+            + "<a target='_blank' href=\"" + prop.url + "\"><img src='" + prop.photo_url + "' align='left' /></a>"
+            + "<a target='_blank' href=\"http://maps.google.com/maps?saddr=Current+Location&daddr=" + prop.title + "\"><b>" + prop.title + "</b><a/>"
             + "&nbsp;<a target='_blank' href=\"" + prop.url + "\">URL</a>"
             + "&nbsp;<a target='_blank' href='/properties/" + prop.id + "'>Show</a><br/>"
             + "Price: " + prop.display_price + "<br/>"
@@ -108,31 +109,47 @@ function handle_properties(props) {
 
 function colourPinsByTime(props) {
     var now = Date.now();
-//    alert(now);
+    $.each(props, function(index, prop) {
+        if (now.compareTo(prop.inspections[0].endDate.addMinutes(10)) > 0) {
+//        if (false) {
+            // remove from map
+            prop.marker.setMap(null);
+        } else {
+            var image = decidePinImage(prop.inspections);
+            if (image == null) {
+                // remove from map
+                prop.marker.setMap(null);
+            } else {
+                prop.marker.setIcon(image);
+            }
+        }
+    });
 //    $.each(props, function(index, prop) {
-//        if (now.compareTo(prop.inspections[0].endDate.addMinutes(10)) > 0) {
+//        var image = decidePinImage(now, prop.inspections);
+//        if (image == null) {
 //            // remove from map
 //            prop.marker.setMap(null);
 //        } else {
-//            prop.marker.setIcon(decidePinImage(now, prop.inspections));
+//            prop.marker.setIcon(image);
 //        }
 //    });
-    $.each(props, function(index, prop) {
-        prop.marker.setIcon(decidePinImage(now, prop.inspections));
-    });
-
-//    prop.marker.setIcon(decidePinImage(now, props[0].inspections));
 }
 
-function decidePinImage(now, inspections) {
+function decidePinImage(inspections) {
+    var now = Date.now();
+
     var open = getNextInspection(inspections);
-    if (open == null) return defaultPinImage;
+    if (open == null) return null;
 
     // if the start date was before now and the end date is after now
     if (now.between(open.startDate.addMinutes(-5), open.endDate.addMinutes(10))) {
-        alert(open.startDate + " - " + open.endDate + " current");
+//        alert(open.startDate + " - " + open.endDate + " current");
         return currentPinImage;
     }
+
+//    if (open.startDate.between(now, now.addMinutes(30))) {
+//        return nextPinImage;
+//    }
 
     // if the open time is more than 30 minutes away
     if (now.addMinutes(30).compareTo(open.startDate) < 0) {
@@ -140,20 +157,20 @@ function decidePinImage(now, inspections) {
     }
 
     // if the open time is in less than 30 minutes
-    if (now.compareTo(open.startDate) <= 0) {
-        alert(open.startDate + " next");
+    if (now.addMinutes(30).between(open.startDate.addMinutes(-5), open.endDate.addMinutes(10))) {
+//        alert(open.startDate + " next");
         return nextPinImage;
-    }
-
-    // if the end was less than 40 minutes ago
-    if (now.compareTo(open.endDate.addMinutes(40)) > 0) {
-//        alert(open.endDate + " past");
-        return pastPinImage;
     }
 
     if (now.compareTo(open.endDate.addMinutes(10)) >= 0) {
         alert(open.endDate + " last");
         return lastPinImage;
+    }
+
+    // if the end was more than 40 minutes ago
+    if (now.compareTo(open.endDate.addMinutes(40)) > 0) {
+//        alert(open.endDate + " past");
+        return pastPinImage;
     }
 
     return defaultPinImage;
@@ -167,6 +184,7 @@ function getNextInspection(inspections) {
     $.each(inspections, function(index, inspection) {
         // if this is in the past, ignore it if there are later values
         if (inspection.startDate.compareTo(now) < 0) return;
+        // TODO skip if date is not today
         if (inspection.startDate.compareTo(value.startDate) < 0) value = inspection;
     });
     return value;
