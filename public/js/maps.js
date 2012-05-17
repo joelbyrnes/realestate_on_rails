@@ -20,6 +20,8 @@ function reload() {
     for(var i=0; i < properties.length; i++){
         properties[i].marker.setMap(null);
     }
+    
+    clearUserLocation();
 
     // reload JS, then reload the properties.
     $.get("/js/maps.js", null, function(data) {
@@ -41,8 +43,8 @@ function getPinImage(pinColor) {
 
 var defaultPinImage = getPinImage('FE7569');
 var currentPinImage = getPinImage('00FF00');
-var lastPinImage = getPinImage('CCAAAA');
-var pastPinImage = getPinImage('666666');
+var lastPinImage = getPinImage('EEAAAA');
+var pastPinImage = getPinImage('AAAAAA');
 var nextPinImage = getPinImage('FFCC00');
 var futurePinImage = getPinImage('6666FF');
 
@@ -110,11 +112,11 @@ function handle_properties(props) {
 function colourPinsByTime(props) {
     var now = Date.now();
     $.each(props, function(index, prop) {
-        if (now.compareTo(prop.inspections[0].endDate.addMinutes(10)) > 0) {
+        //if (now.compareTo(prop.inspections[0].endDate.addMinutes(10)) > 0) {
 //        if (false) {
             // remove from map
-            prop.marker.setMap(null);
-        } else {
+        //    prop.marker.setMap(null);
+        //} else {
             var image = decidePinImage(prop.inspections);
             if (image == null) {
                 // remove from map
@@ -122,10 +124,10 @@ function colourPinsByTime(props) {
             } else {
                 prop.marker.setIcon(image);
             }
-        }
+        //}
     });
 //    $.each(props, function(index, prop) {
-//        var image = decidePinImage(now, prop.inspections);
+//        var image = decidePinImage(prop.inspections);
 //        if (image == null) {
 //            // remove from map
 //            prop.marker.setMap(null);
@@ -141,36 +143,29 @@ function decidePinImage(inspections) {
     var open = getNextInspection(inspections);
     if (open == null) return null;
 
-    // if the start date was before now and the end date is after now
-    if (now.between(open.startDate.addMinutes(-5), open.endDate.addMinutes(10))) {
-//        alert(open.startDate + " - " + open.endDate + " current");
-        return currentPinImage;
-    }
-
-//    if (open.startDate.between(now, now.addMinutes(30))) {
-//        return nextPinImage;
-//    }
-
     // if the open time is more than 30 minutes away
-    if (now.addMinutes(30).compareTo(open.startDate) < 0) {
+    if (new Date(now).addMinutes(30).compareTo(open.startDate) <= 0) {
         return futurePinImage;
     }
 
-    // if the open time is in less than 30 minutes
-    if (now.addMinutes(30).between(open.startDate.addMinutes(-5), open.endDate.addMinutes(10))) {
-//        alert(open.startDate + " next");
+    // if the open time is in future but less than 30 minutes
+    if (now.compareTo(open.startDate) < 0) {
         return nextPinImage;
     }
 
-    if (now.compareTo(open.endDate.addMinutes(10)) >= 0) {
-        alert(open.endDate + " last");
-        return lastPinImage;
+    // if the start date was before now and the end date is after now
+    if (now.between(new Date(open.startDate).addMinutes(-5), new Date(open.endDate).addMinutes(10))) {
+        return currentPinImage;
     }
 
-    // if the end was more than 40 minutes ago
-    if (now.compareTo(open.endDate.addMinutes(40)) > 0) {
-//        alert(open.endDate + " past");
+    // if the end was more than 30 minutes ago
+    if (now.compareTo(new Date(open.endDate).addMinutes(30)) > 0) {
         return pastPinImage;
+    }
+    
+    // if the end was less than 30 minutes ago
+    if (now.compareTo(new Date(open.endDate).addMinutes(10)) >= 0) {
+        return lastPinImage;
     }
 
     return defaultPinImage;
@@ -178,15 +173,19 @@ function decidePinImage(inspections) {
 
 function getNextInspection(inspections) {
     if (inspections.length == 0) return null;
-    if (inspections.length == 1) return inspections[0];
-    var now = Date.now();
-    var value = inspections[0];
-    $.each(inspections, function(index, inspection) {
-        // if this is in the past, ignore it if there are later values
-        if (inspection.startDate.compareTo(now) < 0) return;
-        // TODO skip if date is not today
-        if (inspection.startDate.compareTo(value.startDate) < 0) value = inspection;
-    });
+    if (inspections.length == 1) {
+        value = inspections[0];
+    } else {
+        var now = Date.now();
+        var value = Date.parse("January 1, 1970");
+        $.each(inspections, function(index, inspection) {
+            // if this is in the past, ignore it if there are later values
+            if (inspection.startDate.compareTo(now) >= 0) {
+                // TODO skip if date is not today
+                if (inspection.startDate.compareTo(value.startDate) < 0) value = inspection;
+            }
+        });
+    }
     return value;
 }
 
@@ -249,3 +248,8 @@ navigator.geolocation.watchPosition(function(position) {
     userLocationRadius.setRadius(position.coords.accuracy);
     userLocationRadius.bindTo('center', userLocation, 'position');
 });
+
+function clearUserLocation() {
+    userLocation.setMap(null);
+    userLocationRadius.setMap(null);
+}
