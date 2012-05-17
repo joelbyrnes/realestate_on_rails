@@ -106,4 +106,17 @@ class PropertiesController < ApplicationController
       format.json { head :no_content }
     end
   end
+
+  def search
+    if params[:query]
+      @properties = Property.search(params[:query])
+    else
+      @properties = []
+    end
+
+    respond_to do |format|
+      format.html # search.html.erb
+      format.json { render json: @properties }
+    end
+  end
 end
