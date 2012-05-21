@@ -107,11 +107,20 @@ class PropertiesController < ApplicationController
     end
   end
 
+  # GET /properties/search
+  # GET /properties/search.json
   def search
-    if params[:query]
-      @properties = Property.search(params[:query])
+    if params
+      @properties = Property.search(params)
     else
+	  # this is just here for completeness. the search method will return all if there are no restrictions. 
       @properties = []
+    end
+
+    if params[:seen] == "Not+Seen"
+      @properties = @properties.select { |p| p.seen_date == nil }
+    elsif params[:seen] == "Seen"
+      @properties = @properties.select { |p| p.seen_date != nil }
     end
 
     respond_to do |format|

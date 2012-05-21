@@ -1,18 +1,20 @@
-<h1>Listing properties</h1>
+<h1>Search properties</h1>
 
 <a href="/maps/all">Show all on map</a><br/>
+<a href="/properties">List all</a><br/>
 <br/>
 
-<% form_tag "/properties/search", :method => 'get' do %>
+<% form_tag("/properties/search", :method => 'get') do %>
     <p>
-      <%= text_field_tag :search, params[:search] %>
+      Title: <%= text_field_tag :title, params[:title] %>
       <%= submit_tag "Search", :name => nil %>
     </p>
 <% end %>
 
 <form action='search'>
-  <input name="query" type="text" />
-  <input type='submit' value='Search' />
+  Title: <%= text_field_tag :title, params[:title] %>
+  Seen? <%= select_tag :seen, options_from_collection_for_select(["Not Seen", "Seen"], "to_s", "to_s"), :include_blank => true %>
+  <%= submit_tag "Search", :name => nil %>
 </form>
 
 <% if @properties.empty? %>

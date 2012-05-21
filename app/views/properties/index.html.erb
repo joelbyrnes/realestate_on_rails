@@ -1,14 +1,8 @@
 <h1>Listing properties</h1>
 
 <a href="/maps/all">Show all on map</a><br/>
+<a href="/properties/search">Search</a><br/>
 <br/>
-
-<% form_tag properties_path, :method => 'get' do %>
-    <p>
-      <%= text_field_tag :search, params[:search] %>
-      <%= submit_tag "Search", :name => nil %>
-    </p>
-<% end %>
 
 Showing <%= @properties.length %> properties at <%= DateTime.now.in_time_zone("Brisbane") %>
 
