@@ -40,15 +40,36 @@ class InspectionsController < ApplicationController
   # POST /inspections
   # POST /inspections.json
   def create
-    @inspection = Inspection.new(params[:inspection])
+    insp_params = params[:inspection]
+
+    #@inspection = Inspection.find_by_property_id_and_start_and_end(insp_params[:property_id],
+    #                                                              insp_params[:start], insp_params[:end])
+
+    property = Property.find(insp_params[:property_id])
+    matching_inspections = property.inspections.select { |i| i.start == insp_params[:start] and i.end == insp_params[:end] }
+
+    #puts "MATCHING : #{matching_inspections}"
+    #puts "SIZE: #{matching_inspections.size} (should never be > 1)"
 
     respond_to do |format|
-      if @inspection.save
-        format.html { redirect_to @inspection, notice: 'Inspection was successfully created.' }
-        format.json { render json: @inspection, status: :created, location: @inspection }
+      if matching_inspections.size > 0
+        @inspection = matching_inspections[0]
+        if @inspection.update_attributes(params[:inspection])
+          format.html { redirect_to @inspection, notice: 'Inspection was successfully updated.' }
+          format.json { head :no_content }
+        else
+          format.html { render action: "edit" }
+          format.json { render json: @inspection.errors, status: :unprocessable_entity }
+        end
       else
-        format.html { render action: "new" }
-        format.json { render json: @inspection.errors, status: :unprocessable_entity }
+        @inspection = Inspection.new(params[:inspection])
+        if @inspection.save
+          format.html { redirect_to @inspection, notice: 'Inspection was successfully created.' }
+          format.json { render json: @inspection, status: :created, location: @inspection }
+        else
+          format.html { render action: "new" }
+          format.json { render json: @inspection.errors, status: :unprocessable_entity }
+        end
       end
     end
   end
