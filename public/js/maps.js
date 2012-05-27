@@ -30,8 +30,10 @@ function reload() {
     });
 }
 
+window.setInterval(processPins, 30000);
+
 function recalculate() {
-    colourPinsByTime(properties);
+    processPins(properties);
 }
 
 function getPinImage(pinColor) {
@@ -47,7 +49,6 @@ var lastPinImage = getPinImage('EEAAAA');
 var pastPinImage = getPinImage('AAAAAA');
 var nextPinImage = getPinImage('FFCC00');
 var futurePinImage = getPinImage('6666FF');
-
 
 var pinShadow = new google.maps.MarkerImage("http://chart.apis.google.com/chart?chst=d_map_pin_shadow",
     new google.maps.Size(40, 37),
@@ -85,9 +86,9 @@ function handle_properties(props) {
 
         var htmlString = "<span class='infoWindow'>"
             + "<a target='_blank' href=\"" + prop.url + "\"><img src='" + prop.photo_url + "' align='left' /></a>"
-            + "<a target='_blank' href=\"http://maps.google.com/maps?saddr=Current+Location&daddr=" + prop.title + "\"><b>" + prop.title + "</b><a/>"
-            + "&nbsp;<a target='_blank' href=\"" + prop.url + "\">URL</a>"
+            + "<a target='_blank' href=\"" + prop.url + "\"><b>" + prop.title + "</b><a/>"
             + "&nbsp;<a target='_blank' href='/properties/" + prop.id + "'>Show</a><br/>"
+            + "<a target='_blank' href=\"http://maps.google.com/maps?saddr=Current+Location&daddr=" + prop.title + "\">Get directions</a><br/>"
             + "Price: " + prop.display_price + "<br/>"
             + "Note: " + prop.note + "<br/>"
             + "Inspections:<br/>"
@@ -102,39 +103,42 @@ function handle_properties(props) {
         auto_center(props);
     }
 
-    // TODO after markers are loaded, re-process to change pin colour/icon.
-    // TODO re-process again regularly with current time.
-    colourPinsByTime(props);
+    processPins();
 
     properties = props;
+}
+
+function processPins() {
+    if ($('#inspections_mode').attr('checked')) {
+        colourPinsByTime(properties);
+    } else {
+        $.each(properties, function(index, prop) {
+            prop.marker.setIcon(defaultPinImage);
+            prop.marker.setMap(map);
+        });
+    }
 }
 
 function colourPinsByTime(props) {
     var now = Date.now();
     $.each(props, function(index, prop) {
-        //if (now.compareTo(prop.inspections[0].endDate.addMinutes(10)) > 0) {
+//        if (now.compareTo(prop.inspections[0].endDate.clearTime()) > 0) {
 //        if (false) {
             // remove from map
-        //    prop.marker.setMap(null);
-        //} else {
-            var image = decidePinImage(prop.inspections);
-            if (image == null) {
+//            prop.marker.setMap(null);
+//        } else {
+            var image = null;
+            if (prop.hasOwnProperty("inspections") && prop.inspections) { 
+                image = decidePinImage(prop.inspections);
+            }
+            if (image == null || image == pastPinImage || prop.seen_date) {
                 // remove from map
                 prop.marker.setMap(null);
             } else {
                 prop.marker.setIcon(image);
             }
-        //}
-    });
-//    $.each(props, function(index, prop) {
-//        var image = decidePinImage(prop.inspections);
-//        if (image == null) {
-//            // remove from map
-//            prop.marker.setMap(null);
-//        } else {
-//            prop.marker.setIcon(image);
 //        }
-//    });
+    });
 }
 
 function decidePinImage(inspections) {
@@ -142,6 +146,9 @@ function decidePinImage(inspections) {
 
     var open = getNextInspection(inspections);
     if (open == null) return null;
+    
+    // if the inspection was before today, remove it
+    //if (new Date(now).clearTime().compareTo(new Date(open).clearTime()) > 0) return null;
 
     // if the open time is more than 30 minutes away
     if (new Date(now).addMinutes(30).compareTo(open.startDate) <= 0) {
@@ -172,21 +179,21 @@ function decidePinImage(inspections) {
 }
 
 function getNextInspection(inspections) {
-    if (inspections.length == 0) return null;
+    if (inspections == null || inspections.length == 0) return null;
     if (inspections.length == 1) {
-        value = inspections[0];
+        return inspections[0];
     } else {
         var now = Date.now();
-        var value = Date.parse("January 1, 1970");
+        var next_inspection = inspections[0];
         $.each(inspections, function(index, inspection) {
             // if this is in the past, ignore it if there are later values
             if (inspection.startDate.compareTo(now) >= 0) {
                 // TODO skip if date is not today
-                if (inspection.startDate.compareTo(value.startDate) < 0) value = inspection;
+                if (inspection.startDate.compareTo(next_inspection.startDate) < 0) next_inspection = inspection;
             }
         });
+        return next_inspection;
     }
-    return value;
 }
 
 function addInfoWindow(marker, infocontent) {
@@ -226,7 +233,7 @@ navigator.geolocation.watchPosition(function(position) {
 
     if (!userLocation) {
         // Center the map on the new position
-        map.setCenter(userPos);
+        //map.setCenter(userPos);
 
         // Marker does not exist - Create it
         userLocation = new google.maps.Marker({
@@ -250,6 +257,6 @@ navigator.geolocation.watchPosition(function(position) {
 });
 
 function clearUserLocation() {
-    userLocation.setMap(null);
-    userLocationRadius.setMap(null);
+    if (userLocation) userLocation.setMap(null);
+    if (userLocationRadius) userLocationRadius.setMap(null);
 }

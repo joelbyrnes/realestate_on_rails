@@ -19,8 +19,9 @@
   <script type="text/javascript" src="/js/maps.js"></script>
 </head>
 <body onload="initialize()">
-<a href="#reload" onclick="reload(); return false;">Reload</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="#recalculate" onclick="recalculate(); return false;">Recalculate</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<a href="#reload" onclick="reload(); return false;">Reload</a>&nbsp;&nbsp;&nbsp;
+<a href="#recalculate" onclick="recalculate(); return false;">Recalc</a>&nbsp;&nbsp;&nbsp;
+<input type='checkbox' id="inspections_mode" onchange="processPins();">Inspections mode &nbsp;&nbsp;&nbsp;
 <a href="/properties">List</a>
 
 <div id="map_canvas" style="width:100%; height:100%"></div>

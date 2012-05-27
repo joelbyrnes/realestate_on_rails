@@ -117,7 +117,7 @@ class PropertiesController < ApplicationController
       @properties = []
     end
 
-    if params[:seen] == "Not+Seen"
+    if params[:seen] == "Not Seen"
       @properties = @properties.select { |p| p.seen_date == nil }
     elsif params[:seen] == "Seen"
       @properties = @properties.select { |p| p.seen_date != nil }
